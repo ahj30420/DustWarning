@@ -14,7 +14,7 @@ public class DBConnect {
      */
     public void createTable() {
         Connection conn = getConnection();
-        Statement stmt = null;
+        PreparedStatement pstmt = null;
 
         String sql1 = "CREATE TABLE Inspection (" +
                 "    id BIGINT AUTO_INCREMENT PRIMARY KEY," +
@@ -29,11 +29,35 @@ public class DBConnect {
                 "    time DATETIME" +
                 ")";
         try{
-            stmt = conn.createStatement();
-            stmt.execute(sql1);
-            stmt.execute(sql2);
+            pstmt = conn.prepareStatement(sql1);
+            pstmt.execute();
+            pstmt = conn.prepareStatement(sql2);
+            pstmt.execute();
         } catch (SQLException e){
             e.printStackTrace();
+        } finally {
+            closeConnection(null, pstmt, conn);
+        }
+    }
+
+    /**
+     * 측정소 검증 내역 저장하기
+     */
+    public void saveInspection(String station, String content) {
+        Connection conn = getConnection();
+        PreparedStatement pstmt = null;
+
+        String sql = "insert into inspection(station, content) values(?,?)";
+
+        try{
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1,station);
+            pstmt.setString(2, content);
+            pstmt.executeUpdate();
+        } catch (SQLException e){
+            e.printStackTrace();
+        }finally {
+            closeConnection(null, pstmt, conn);
         }
     }
 
