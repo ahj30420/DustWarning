@@ -1,7 +1,11 @@
 package dao;
 
+import dto.AlertResponse;
+
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DBConnect {
 
@@ -33,7 +37,6 @@ public class DBConnect {
                 "    date DATETIME" +
                 ")";
         try{
-
             // 테이블 존재 여부 확인을 위한 쿼리
             DatabaseMetaData metaData = conn.getMetaData();
             rs = metaData.getTables(null, null, "AlertInfo", null);
@@ -111,6 +114,41 @@ public class DBConnect {
         } finally {
             closeConnection(null, pstmt, conn);
         }
+    }
+
+    /**
+     * 경보 발령 알람을 위해 경보 정보 불러오기
+     * 발생한 시간 순서대로 정렬
+     */
+    public List<AlertResponse> getAlert(){
+        Connection conn = getConnection();
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        String sql = "select * from alertInfo order by date";
+
+        List<AlertResponse> alertList = new ArrayList<>();
+
+        try{
+            pstmt = conn.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+
+            while(rs.next()){
+                String station = rs.getString("station");
+                String level = rs.getString("level");
+                Timestamp timestamp = rs.getTimestamp("date");
+                LocalDateTime date = timestamp.toLocalDateTime();
+
+                alertList.add(new AlertResponse(station, level, date));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeConnection(rs, pstmt, conn);
+        }
+
+        return alertList;
     }
 
     /**
