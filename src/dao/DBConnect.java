@@ -1,11 +1,14 @@
 package dao;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 
 public class DBConnect {
 
     /**
      * 테이블 생성
+     * 해당 테이블이 이미 생성되어 있다면 삭제하고 다시 생성
+     *
      * - Inspection 테이블: 측정소 점검 내역 테이블
      * (station: 측정소 / content: 점검 내역)
      *
@@ -15,6 +18,7 @@ public class DBConnect {
     public void createTable() {
         Connection conn = getConnection();
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
 
         String sql1 = "CREATE TABLE Inspection (" +
                 "    id BIGINT AUTO_INCREMENT PRIMARY KEY," +
@@ -26,9 +30,26 @@ public class DBConnect {
                 "    id BIGINT AUTO_INCREMENT PRIMARY KEY," +
                 "    station VARCHAR(255)," +
                 "    level VARCHAR(255)," +
-                "    time DATETIME" +
+                "    date DATETIME" +
                 ")";
         try{
+
+            // 테이블 존재 여부 확인을 위한 쿼리
+            DatabaseMetaData metaData = conn.getMetaData();
+            rs = metaData.getTables(null, null, "AlertInfo", null);
+
+            // 테이블이 존재하는 경우
+            if (rs.next()) {
+                dropTable(conn, pstmt,"AlertInfo"); // 테이블 삭제
+            }
+
+            rs = metaData.getTables(null, null, "inspection", null);
+
+            // 테이블이 존재하는 경우
+            if(rs.next()){
+                dropTable(conn, pstmt,"inspection"); // 테이블 삭제
+            }
+
             pstmt = conn.prepareStatement(sql1);
             pstmt.execute();
             pstmt = conn.prepareStatement(sql2);
@@ -36,8 +57,17 @@ public class DBConnect {
         } catch (SQLException e){
             e.printStackTrace();
         } finally {
-            closeConnection(null, pstmt, conn);
+            closeConnection(rs, pstmt, conn);
         }
+    }
+
+    /**
+     * 테이블 삭제
+     */
+    public void dropTable(Connection conn, PreparedStatement pstmt, String tableName) throws SQLException {
+        String sql = "DROP TABLE IF EXISTS " + tableName;
+        pstmt = conn.prepareStatement(sql);
+        pstmt.execute();
     }
 
     /**
@@ -57,6 +87,28 @@ public class DBConnect {
         } catch (SQLException e){
             e.printStackTrace();
         }finally {
+            closeConnection(null, pstmt, conn);
+        }
+    }
+
+    /**
+     * 경보 발령 정보 저장
+     */
+    public void saveAlertInfo(String station, String level, LocalDateTime date){
+        Connection conn = getConnection();
+        PreparedStatement pstmt = null;
+
+        String sql = "insert into alertInfo(station, level, date) values(?,?,?)";
+
+        try{
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, station);
+            pstmt.setString(2, level);
+            pstmt.setTimestamp(3, Timestamp.valueOf(date));
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
             closeConnection(null, pstmt, conn);
         }
     }
