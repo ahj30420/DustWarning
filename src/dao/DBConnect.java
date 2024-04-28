@@ -166,7 +166,7 @@ public class DBConnect {
             System.out.println("JDBC driver load fail");
         }
         try {
-            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/exem?characterEncoding=UTF-8&serverTimezone=Asia/Seoul&useSSL=false", "root","z30420qwas");
+            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/exem?characterEncoding=UTF-8&serverTimezone=Asia/Seoul&useSSL=false", "root","${USER.PW}");
             System.out.println("DB connect success");
         }
         catch(SQLException e) {
